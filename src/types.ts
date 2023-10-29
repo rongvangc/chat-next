@@ -15,7 +15,7 @@ type RegisterType = {
 
 type CreateRoomType = {
   name: string;
-  users: User[];
+  userIds: string[];
   createdBy: string;
   admin: string;
 };
@@ -36,17 +36,17 @@ type User = {
 
 type Room = {
   name: string;
-  users: User[];
+  userIds: string[];
   createdBy: string;
   admin: string;
-  messages: Message[];
+  messageIds: string[];
   createdAt: Date;
 };
 
 type Message = {
   content: string;
-  sender: User;
-  recipients: MessageRecipient[];
+  sender: string;
+  recipients: string[];
   createdAt: Date;
 };
 

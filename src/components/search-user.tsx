@@ -1,4 +1,5 @@
 import { cn, fallbackDisplayname } from "@/lib/utils";
+import useChatStore from "@/stores/chat";
 import useUserStore from "@/stores/user";
 import { Check } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -20,8 +21,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./ui/dialog";
-import { useToast } from "./ui/use-toast";
-import useChatStore from "@/stores/chat";
 
 export const SearchUser = () => {
   const [open, setOpen] = useState<boolean>(false);
@@ -30,8 +29,6 @@ export const SearchUser = () => {
 
   const { users, getAllUsers } = useUserStore();
   const { createRoom } = useChatStore();
-
-  console.log(selectedUsers);
 
   const selectedUerOIncludeYou = useMemo(
     () => [
@@ -58,14 +55,14 @@ export const SearchUser = () => {
           name: user?.id,
           admin: user?.id,
           createdBy: user?.id,
-          users: selectedUerOIncludeYou,
+          userIds: listUID,
         });
         setSelectedUsers([]);
       } catch (error) {
         console.error(error);
       }
     }
-  }, [createRoom, selectedUerOIncludeYou, user?.id]);
+  }, [createRoom, listUID, user?.id]);
 
   // get all users
   useEffect(() => {

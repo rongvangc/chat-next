@@ -1,5 +1,6 @@
 "use client";
 
+import { RoomList } from "@/components/room-list";
 import { SearchUser } from "@/components/search-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,7 @@ export default function ChatPage({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const { replace } = useRouter();
-  const { showMobileDraw, setShowMobileDraw } = useChatStore();
+  const { showMobileDraw, setShowMobileDraw, getRooms } = useChatStore();
   const { getUserInfo, logout } = useUserStore();
 
   const handleLogout = () => {
@@ -28,6 +29,7 @@ export default function ChatPage({
 
   useEffect(() => {
     getUserInfo();
+    getRooms();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -66,7 +68,9 @@ export default function ChatPage({
           <div className="pt-4">
             <SearchUser />
           </div>
-          <div className="py-4">{/* <ChatList /> */}</div>
+          <div className="py-4">
+            <RoomList />
+          </div>
         </div>
         <div className="col-span-4 md:col-span-3">{/* <Chat /> */}</div>
       </div>
