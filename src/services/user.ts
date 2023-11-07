@@ -40,7 +40,7 @@ export const signIn = async (userData: LoginType): Promise<SignInResponse> => {
 
 export const getUser = async (): Promise<GetUserResponse> => {
   try {
-    const { data } = await axiosClient.get<GetUserResponse>("/user");
+    const data = await axiosClient.get<null, GetUserResponse>("/user");
 
     return data;
   } catch (error) {
@@ -52,7 +52,7 @@ export const getUser = async (): Promise<GetUserResponse> => {
 
 export const getAllUsers = async (): Promise<GetUsersResponse> => {
   try {
-    const { data } = await axiosClient.get<GetUsersResponse>("/user/all");
+    const data = await axiosClient.get<null, GetUsersResponse>("/user/all");
 
     return data;
   } catch (error) {

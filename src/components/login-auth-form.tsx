@@ -31,7 +31,7 @@ export function LoginAuthForm({ className, ...props }: LoginAuthFormProps) {
       setErrorMessage(message);
     }
 
-    if (data?.id) {
+    if (data?._id) {
       setErrorMessage("");
       setToken(data?.access_token);
       replace("/chat");
@@ -83,7 +83,7 @@ export function LoginAuthForm({ className, ...props }: LoginAuthFormProps) {
             Sign In
           </Button>
 
-          {errorMessage && <AlertError />}
+          {errorMessage && <AlertError errorMessage={errorMessage} />}
         </div>
       </form>
     </div>

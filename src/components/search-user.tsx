@@ -21,14 +21,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./ui/dialog";
+import { createRoom } from "@/services/room";
+import usePusherEvent from "@/hooks/usePusherEvent";
+import { PusherEvent } from "@/lib/pusherEvent";
 
 export const SearchUser = () => {
   const [open, setOpen] = useState<boolean>(false);
-  const { user } = useUserStore();
+  const { setRoom } = useChatStore();
+  const { users, user, getAllUsers } = useUserStore();
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
-
-  const { users, getAllUsers } = useUserStore();
-  const { createRoom } = useChatStore();
 
   const selectedUerOIncludeYou = useMemo(
     () => [
@@ -36,33 +37,61 @@ export const SearchUser = () => {
         displayName: user?.displayName,
         username: user?.username,
         photoURL: user?.photoURL,
-        id: user?.id,
+        _id: user?._id,
       },
       ...selectedUsers,
     ],
-    [selectedUsers, user?.displayName, user?.id, user?.photoURL, user?.username]
+    [
+      selectedUsers,
+      user?.displayName,
+      user?._id,
+      user?.photoURL,
+      user?.username,
+    ]
   );
 
   const listUID = selectedUerOIncludeYou?.reduce((acc, value) => {
-    if (value?.id) return acc.concat([value.id]);
+    if (value?._id) return acc.concat([value._id]);
     return acc;
   }, [] as string[]);
 
   const handleCreateRoom = useCallback(async () => {
-    if (user?.id) {
+    const userIds = selectedUerOIncludeYou?.map((item) => item._id!.toString());
+
+    if (user?._id && userIds.length) {
       try {
-        createRoom({
-          name: user?.id,
-          admin: user?.id,
-          createdBy: user?.id,
-          userIds: listUID,
-        });
+        const room = {
+          name: user?._id,
+          admin: user?._id,
+          createdBy: user?._id,
+          userIds,
+        };
+
+        try {
+          await createRoom(room);
+        } catch (error) {
+          console.log(error);
+        }
+
         setSelectedUsers([]);
       } catch (error) {
         console.error(error);
+        setSelectedUsers([]);
       }
     }
-  }, [createRoom, listUID, user?.id]);
+  }, [selectedUerOIncludeYou, user?._id]);
+
+  const handleNewRoom = (data: Room & { error?: any }) => {
+    if (data?.error) {
+      console.log("Error:", data.error);
+    } else {
+      console.log(data);
+
+      setRoom(data);
+    }
+  };
+
+  usePusherEvent(user?._id ?? "", PusherEvent.NEW_ROOM, handleNewRoom);
 
   // get all users
   useEffect(() => {

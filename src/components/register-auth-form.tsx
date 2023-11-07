@@ -8,6 +8,7 @@ import Image from "next/image";
 import { ChangeEvent, SyntheticEvent, useState } from "react";
 import { AlertError } from "./alert";
 import { useRouter } from "next/navigation";
+import { useEdgeStore } from "@/lib/edgestore";
 
 interface RegisterAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -22,11 +23,13 @@ export function RegisterAuthForm({
   const [displayName, setDisplayName] = useState<string>("");
   const [filePreview, setFilePreview] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const [file, setFile] = useState<File | undefined>(undefined);
+  const [fileUpload, setFileUpload] = useState<File>();
+
+  const { edgestore } = useEdgeStore();
 
   const handleUploadImage = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target?.files?.[0];
-    setFile(file);
+    setFileUpload(file);
     file && setFilePreview(URL.createObjectURL(file));
   };
 
@@ -34,26 +37,49 @@ export function RegisterAuthForm({
     e.preventDefault();
     setIsLoading(true);
 
-    const { data, message } = await createUser({
-      username,
-      password,
-      displayName,
-      file: file as Blob | Uint8Array | ArrayBuffer,
-    });
+    try {
+      if (fileUpload) {
+        try {
+          const res = await edgestore.publicFiles.upload({
+            file: fileUpload,
+            onProgressChange: (progress) => {
+              // you can use this to show a progress bar
+              console.log(progress);
+            },
+          });
 
-    // Error from server
-    if (message) {
-      setErrorMessage(message);
-    }
+          const file = res?.url;
 
-    if (data?.status) {
-      setErrorMessage("");
-      replace("/register-success");
-    }
+          if (!file) {
+            setErrorMessage("Can't upload file");
+          }
 
-    setTimeout(() => {
+          const { data, message } = await createUser({
+            username,
+            password,
+            displayName,
+            photoURL: file,
+          });
+
+          // Error from server
+          if (message) {
+            setErrorMessage(message);
+            setIsLoading(false);
+          }
+
+          if (data?.status) {
+            setErrorMessage("");
+            replace("/register-success");
+          }
+        } catch (error) {
+          setErrorMessage("Can't upload image, something wrong");
+          setIsLoading(false);
+        }
+      }
+    } catch (error) {
+      setErrorMessage("Can't register, something wrong");
       setIsLoading(false);
-    }, 3000);
+    }
   };
 
   return (
@@ -107,10 +133,15 @@ export function RegisterAuthForm({
             />
           </div>
 
-          <div className="grid w-full max-w-sm items-center gap-1.5">
+          <div className="grid">
             {filePreview && (
-              <div className="relative">
-                <Image src={filePreview} fill alt="file-preview" />
+              <div className="relative rounded-full flex w-full max-w-sm items-center justify-center gap-1.5">
+                <Image
+                  src={filePreview}
+                  width={200}
+                  height={200}
+                  alt="file-preview"
+                />
               </div>
             )}
             <Input onChange={handleUploadImage} id="picture" type="file" />
@@ -123,7 +154,7 @@ export function RegisterAuthForm({
             Sign In with Email
           </Button>
 
-          {errorMessage && <AlertError />}
+          {errorMessage && <AlertError errorMessage={errorMessage} />}
         </div>
       </form>
     </div>

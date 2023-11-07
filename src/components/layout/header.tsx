@@ -12,9 +12,11 @@ import { cn, fallbackDisplayname } from "@/lib/utils";
 import useUserStore from "@/stores/user";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Button } from "../ui/button";
+import { LogOut } from "lucide-react";
 
 const ListItem = React.forwardRef<
   React.ElementRef<"a">,
@@ -45,7 +47,13 @@ ListItem.displayName = "ListItem";
 
 const Header = () => {
   const pathname = usePathname();
-  const { user } = useUserStore();
+  const { replace } = useRouter();
+  const { user, logout } = useUserStore();
+
+  const handleLogout = () => {
+    logout();
+    replace("/");
+  };
 
   if (pathname === "/") return;
 
@@ -77,6 +85,11 @@ const Header = () => {
                   {fallbackDisplayname(user?.displayName)}
                 </AvatarFallback>
               </Avatar>
+              <div className="flex items-center gap-2">
+                <Button onClick={handleLogout}>
+                  <LogOut size={12} />
+                </Button>
+              </div>
             </ul>
           </div>
         </div>

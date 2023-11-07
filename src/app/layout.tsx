@@ -1,6 +1,7 @@
 import Footer from "@/components/layout/footer";
 import Header from "@/components/layout/header";
 import { ThemeProvider } from "@/components/theme-provider";
+import { EdgeStoreProvider } from "@/lib/edgestore";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 import { Inter as FontSans } from "next/font/google";
@@ -38,7 +39,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <Header />
-          {children}
+          <EdgeStoreProvider>{children}</EdgeStoreProvider>
           <Footer />
         </ThemeProvider>
       </body>

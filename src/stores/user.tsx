@@ -14,19 +14,19 @@ const useUserStore = create<UserState>((set) => ({
   user: null,
   users: null,
   getUserInfo: async () => {
-    const user = (await getUser()) as unknown as User;
+    const { data } = await getUser();
 
     set((state) => ({
       ...state,
-      user,
+      user: data,
     }));
   },
   getAllUsers: async () => {
-    const users = (await getAllUsers()) as unknown as User[];
+    const { data } = await getAllUsers();
 
     set((state) => ({
       ...state,
-      users,
+      users: data,
     }));
   },
   logout: () => clearToken(),

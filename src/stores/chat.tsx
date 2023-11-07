@@ -1,20 +1,31 @@
-import { createRoom, getRooms } from "@/services/room";
+import {
+  createRoom,
+  getRoomMessage,
+  getRooms,
+  saveRoomMessage,
+} from "@/services/room";
 import { create } from "zustand";
 
 interface ChatState {
   showMobileDraw: boolean;
   rooms: Room[];
-  roomSelect: string;
+  roomMessages: Message[];
+  roomSelect: { id: string; members: User[] };
   setShowMobileDraw: (data: boolean) => void;
-  setRoomSelect: (selectedRoomId: string) => void;
+  setRoomSelect: (selectedRoomId: string, members: User[]) => void;
   getRooms: () => void;
-  createRoom: (data: CreateRoomType) => void;
+  setRoom: (data: Room) => void;
+  setMessage: (messageSend: Message) => void;
 }
 
 const useChatStore = create<ChatState>((set) => ({
   rooms: [],
+  roomMessages: [],
   showMobileDraw: false,
-  roomSelect: "",
+  roomSelect: {
+    id: "",
+    members: [],
+  },
   setShowMobileDraw: (data) =>
     set((state) => ({
       ...state,
@@ -23,7 +34,7 @@ const useChatStore = create<ChatState>((set) => ({
   getRooms: async () => {
     const { data: roomsData } = await getRooms();
 
-    const rooms = roomsData as Room[];
+    const rooms = roomsData?.data;
 
     if (rooms?.length) {
       set((state) => ({
@@ -32,22 +43,32 @@ const useChatStore = create<ChatState>((set) => ({
       }));
     }
   },
-  createRoom: async (data) => {
-    const { data: roomData } = await createRoom(data);
-
-    if (roomData) {
-      const roomCreated = roomData.data as Room;
+  setRoom: async (data) => {
+    if (data) {
       set((state) => ({
         ...state,
-        rooms: [roomCreated, ...state.rooms],
+        rooms: [data, ...state.rooms],
       }));
     }
   },
-  setRoomSelect: async (selectedRoom) => {
+  setRoomSelect: async (id, members) => {
+    // const { data: roomData } = await getRoomById(id);
+    const { data: dataMessages } = await getRoomMessage(id);
+
     set((state) => ({
       ...state,
-      selectedRoom,
+      roomSelect: {
+        id,
+        members,
+      },
+      roomMessages: dataMessages?.data,
       showMobileDraw: false,
+    }));
+  },
+  setMessage: async (messageSend) => {
+    set((state) => ({
+      ...state,
+      roomMessages: [...state.roomMessages, messageSend],
     }));
   },
 }));

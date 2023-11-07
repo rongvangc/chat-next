@@ -4,13 +4,13 @@ type LoginType = {
 };
 
 type AccessToken = {
-  id: string;
+  _id: string;
   access_token: string;
 };
 
 type RegisterType = {
   displayName: string;
-  file: Blob | Uint8Array | ArrayBuffer;
+  photoURL: string;
 } & LoginType;
 
 type CreateRoomType = {
@@ -28,31 +28,32 @@ type GenericResponse<T> = {
 };
 
 type User = {
-  id?: string;
+  _id?: string;
   username?: string;
   displayName?: string;
   photoURL?: string;
 };
 
 type Room = {
+  _id: string;
   name: string;
   userIds: string[];
   createdBy: string;
   admin: string;
-  messageIds: string[];
-  createdAt: Date;
+  createdAt?: Date;
 };
 
 type Message = {
+  roomId: string;
   content: string;
-  sender: string;
-  recipients: string[];
-  createdAt: Date;
+  senderId: string;
+  recipientIds: string[];
+  createdAt?: Date;
 };
 
 type MessageRecipient = {
   messageId: string;
   recipientId: string;
   isRead: boolean;
-  createdAt: Date;
+  createdAt?: Date;
 };
