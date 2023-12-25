@@ -1,5 +1,5 @@
 import { cn, fallbackDisplayname } from "@/lib/utils";
-import useChatStore from "@/stores/chat";
+import { createRoom } from "@/services/room";
 import useUserStore from "@/stores/user";
 import { Check } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -21,13 +21,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./ui/dialog";
-import { createRoom } from "@/services/room";
-import usePusherEvent from "@/hooks/usePusherEvent";
-import { PusherEvent } from "@/lib/pusherEvent";
 
 export const SearchUser = () => {
   const [open, setOpen] = useState<boolean>(false);
-  const { setRoom } = useChatStore();
   const { users, user, getAllUsers } = useUserStore();
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
 
@@ -49,11 +45,6 @@ export const SearchUser = () => {
       user?.username,
     ]
   );
-
-  const listUID = selectedUerOIncludeYou?.reduce((acc, value) => {
-    if (value?._id) return acc.concat([value._id]);
-    return acc;
-  }, [] as string[]);
 
   const handleCreateRoom = useCallback(async () => {
     const userIds = selectedUerOIncludeYou?.map((item) => item._id!.toString());
@@ -80,18 +71,6 @@ export const SearchUser = () => {
       }
     }
   }, [selectedUerOIncludeYou, user?._id]);
-
-  const handleNewRoom = (data: Room & { error?: any }) => {
-    if (data?.error) {
-      console.log("Error:", data.error);
-    } else {
-      console.log(data);
-
-      setRoom(data);
-    }
-  };
-
-  usePusherEvent(user?._id ?? "", PusherEvent.NEW_ROOM, handleNewRoom);
 
   // get all users
   useEffect(() => {

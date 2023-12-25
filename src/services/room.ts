@@ -18,7 +18,7 @@ type SaveMessageResponse = GenericResponse<{
 
 type GetRoomMessageResponse = GenericResponse<{
   status?: boolean;
-  data?: Message[];
+  data?: MessageReceiver[];
 }>;
 
 export const getRooms = async (): Promise<GetRoomResponse> => {
@@ -87,6 +87,23 @@ export const saveRoomMessage = async (
     const data = await axiosClient.post<Message, SaveMessageResponse>(
       `/message`,
       messageData
+    );
+
+    return data;
+  } catch (error) {
+    const err = error as AxiosError;
+    const data = err.response?.data as SaveMessageResponse;
+    return data || { error: "Error occurred" };
+  }
+};
+
+export const readRoomMessage = async (
+  readMessageData: ReadMessageData
+): Promise<SaveMessageResponse> => {
+  try {
+    const data = await axiosClient.post<ReadMessageData, SaveMessageResponse>(
+      `/message/read`,
+      readMessageData
     );
 
     return data;

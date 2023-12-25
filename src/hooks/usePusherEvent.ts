@@ -10,7 +10,6 @@ const usePusherEvent = (
     const channel = pusher.subscribe(channelName);
     channel.bind(eventName, callback);
 
-    // Hủy đăng ký khi component bị unmount
     return () => {
       channel.unbind(eventName);
       pusher.unsubscribe(channelName);

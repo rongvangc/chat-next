@@ -11,8 +11,8 @@ export default function RegisterSuccessPage({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   return (
-    <div className="container">
-      <div className="flex flex-col justify-center items-center">
+    <div className="fixed h-screen w-screen top-0 overflow-hidden bg-white z-20">
+      <div className="flex h-full flex-col justify-center items-center">
         <div className="max-w-[500px] text-center py-32">
           <Image src={SuccessSvg} width={500} height={500} alt="success" />
           <h4 className="text-xl py-4">

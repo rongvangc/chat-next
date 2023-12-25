@@ -40,7 +40,13 @@ type Room = {
   userIds: string[];
   createdBy: string;
   admin: string;
+  count: number;
   createdAt?: Date;
+};
+
+type UpdatedRoom = {
+  roomId: string;
+  count: number;
 };
 
 type Message = {
@@ -51,9 +57,22 @@ type Message = {
   createdAt?: Date;
 };
 
+type MessageReceiver = {
+  roomId: string;
+  content: string;
+  senderId: User;
+  recipientIds: User[];
+  createdAt?: Date;
+};
+
 type MessageRecipient = {
   messageId: string;
   recipientId: string;
   isRead: boolean;
   createdAt?: Date;
+};
+
+type ReadMessageData = {
+  roomId: string;
+  userId: string;
 };

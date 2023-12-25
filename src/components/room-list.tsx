@@ -4,10 +4,35 @@ import useUserStore from "@/stores/user";
 import { useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Badge } from "./ui/badge";
+import usePusherEvent from "@/hooks/usePusherEvent";
+import { PusherEvent } from "@/lib/pusherEvent";
 
 export function RoomList() {
-  const { rooms, setRoomSelect, getRooms } = useChatStore();
+  const { rooms, roomSelect, setRoomSelect, getRooms, setCountRoom, setRoom } =
+    useChatStore();
   const { user } = useUserStore();
+
+  const handleUpdateRoom = (data: UpdatedRoom & { error?: any }) => {
+    if (data?.error) {
+      console.log("Error:", data.error);
+    } else {
+      setCountRoom(data);
+    }
+  };
+
+  console.log(roomSelect);
+
+  const handleNewRoom = (data: Room & { error?: any }) => {
+    if (data?.error) {
+      console.log("Error:", data.error);
+    } else {
+      setRoom(data);
+    }
+  };
+
+  usePusherEvent(user?._id ?? "", PusherEvent.UPDATE_ROOM, handleUpdateRoom);
+  usePusherEvent(user?._id ?? "", PusherEvent.NEW_ROOM, handleNewRoom);
 
   useEffect(() => {
     getRooms();
@@ -36,7 +61,7 @@ export function RoomList() {
                 onClick={() => setRoomSelect(item?._id, participantIds)}
                 className="flex items-center justify-between space-x-4 cursor-pointer rounded-s-full rounded-e-md hover:bg-slate-50"
               >
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-4 relative">
                   <Avatar>
                     <AvatarImage src={participantIds?.[0]?.photoURL} />
                     <AvatarFallback>
@@ -51,6 +76,16 @@ export function RoomList() {
                       {participantIds?.[0]?.username}
                     </p>
                   </div>
+                  {item?.count ? (
+                    <Badge
+                      className="-top-2 text-xs font-medium absolute"
+                      variant="destructive"
+                    >
+                      {item?.count}
+                    </Badge>
+                  ) : (
+                    <></>
+                  )}
                 </div>
               </div>
             );
@@ -63,7 +98,7 @@ export function RoomList() {
               onClick={() => setRoomSelect(item?._id, participantIds)}
               className="flex items-center justify-between space-x-4 cursor-pointer rounded-s-full rounded-e-md hover:bg-slate-50"
             >
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-4 relative">
                 <Avatar>
                   <AvatarFallback>GR</AvatarFallback>
                 </Avatar>
@@ -80,6 +115,16 @@ export function RoomList() {
                     ))}
                   </div>
                 </div>
+                {item?.count ? (
+                  <Badge
+                    className="-top-2 text-xs font-medium absolute"
+                    variant="destructive"
+                  >
+                    {item?.count}
+                  </Badge>
+                ) : (
+                  <></>
+                )}
               </div>
             </div>
           );

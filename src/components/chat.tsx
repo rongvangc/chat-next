@@ -1,10 +1,15 @@
 import EmptySvg from "@/assets/images/empty-chat.svg";
+import { useDebounce } from "@/hooks/useDebounce";
+import usePusherEvent from "@/hooks/usePusherEvent";
+import { PusherEvent } from "@/lib/pusherEvent";
 import { cn, fallbackDisplayname } from "@/lib/utils";
+import { readRoomMessage, saveRoomMessage } from "@/services/room";
 import useChatStore from "@/stores/chat";
 import useUserStore from "@/stores/user";
 import { Menu, Send } from "lucide-react";
 import Image from "next/image";
 import {
+  ChangeEvent,
   SyntheticEvent,
   useCallback,
   useEffect,
@@ -15,14 +20,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "./ui/card";
 import { Input } from "./ui/input";
-import usePusherEvent from "@/hooks/usePusherEvent";
-import { saveRoomMessage } from "@/services/room";
-import { PusherEvent } from "@/lib/pusherEvent";
 
 export function Chat() {
   const [messageText, setMessageText] = useState<string>("");
-  const { roomMessages, rooms, roomSelect, setRoomSelect, setMessage } =
-    useChatStore();
+  const {
+    roomMessages,
+    rooms,
+    roomSelect,
+    setRoomSelect,
+    setMessage,
+    setOrderRoom,
+  } = useChatStore();
   const { setShowMobileDraw } = useChatStore();
   const { user } = useUserStore();
 
@@ -33,13 +41,17 @@ export function Chat() {
     ?.map((value) => value?._id)
     ?.filter(Boolean);
 
-  const detechChatType = useCallback(() => {
+  const detectChatType = useCallback(() => {
     // USER CHAT
-    if (roomSelect?.members?.length <= 2) {
-      const id = roomSelect?.members?.[1]?._id;
-      const avatar = roomSelect?.members?.[1]?.photoURL;
-      const username = roomSelect?.members?.[1]?.username;
-      const displayName = roomSelect?.members?.[1]?.displayName;
+
+    if (roomSelect?.members?.length <= 1) {
+      const roomParticipant = roomSelect.members?.find(
+        (member) => member._id !== user?._id
+      );
+      const id = roomParticipant?._id;
+      const avatar = roomParticipant?.photoURL;
+      const username = roomParticipant?.username;
+      const displayName = roomParticipant?.displayName;
 
       return (
         <div key={id} className="flex items-center space-x-4">
@@ -94,7 +106,14 @@ export function Chat() {
         </div>
       </div>
     );
-  }, [roomSelect?.members, setShowMobileDraw]);
+  }, [roomSelect.members, setShowMobileDraw, user?._id]);
+
+  const handleChangeMessage = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      setMessageText(e.target.value);
+    },
+    []
+  );
 
   const handleSendChat = useCallback(
     async (e: SyntheticEvent) => {
@@ -110,6 +129,8 @@ export function Chat() {
 
         try {
           await saveRoomMessage(messageSend);
+
+          setOrderRoom(roomSelect?.id);
         } catch (error) {
           console.log(error);
         }
@@ -117,10 +138,10 @@ export function Chat() {
         setMessageText("");
       }
     },
-    [listIds, messageText, roomSelect?.id, user?._id]
+    [listIds, messageText, roomSelect?.id, setOrderRoom, user?._id]
   );
 
-  const handleNewMessage = (data: Message & { error?: any }) => {
+  const handleNewMessage = (data: MessageReceiver & { error?: any }) => {
     if (data?.error) {
       console.log("Error:", data.error);
     } else {
@@ -128,7 +149,24 @@ export function Chat() {
     }
   };
 
-  usePusherEvent(roomSelect?.id, PusherEvent.NEW_MESSAGE, handleNewMessage);
+  const handleReadMessage = useCallback(async () => {
+    try {
+      if (user?._id) {
+        await readRoomMessage({
+          roomId: roomSelect?.id,
+          userId: user?._id,
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }, [roomSelect?.id, user?._id]);
+
+  usePusherEvent(
+    roomSelect?.id ?? "",
+    PusherEvent.NEW_MESSAGE,
+    handleNewMessage
+  );
 
   // selected room on first start
   useEffect(() => {
@@ -169,17 +207,20 @@ export function Chat() {
     <div className="w-full h-full">
       <Card>
         <CardHeader className="flex flex-row items-center">
-          {detechChatType()}
+          {detectChatType()}
         </CardHeader>
 
-        <CardContent ref={messagesEndRef} className="flex flex-col-reverse">
+        <CardContent
+          ref={messagesEndRef}
+          className="flex flex-col-reverse h-[calc(100vh-248px)] overflow-y-auto"
+        >
           <div key={roomSelect?.id} className="space-y-4 max-h-max">
             {roomMessages?.map((data, index) => (
               <div
                 key={index}
                 className={cn(
                   "flex gap-2 items-center",
-                  data.senderId === user?._id
+                  data.senderId?._id === user?._id
                     ? ""
                     : "flex-row-reverse justify-end"
                 )}
@@ -187,7 +228,7 @@ export function Chat() {
                 <div
                   className={cn(
                     "flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
-                    data.senderId === user?._id
+                    data.senderId?._id === user?._id
                       ? "ml-auto bg-primary text-primary-foreground"
                       : "bg-muted"
                   )}
@@ -195,9 +236,9 @@ export function Chat() {
                   {data.content}
                 </div>
                 <Avatar>
-                  <AvatarImage src={user?.photoURL} alt="Image" />
+                  <AvatarImage src={data.senderId?.photoURL} alt="Image" />
                   <AvatarFallback>
-                    {fallbackDisplayname(user?.displayName)}
+                    {fallbackDisplayname(data.senderId?.displayName)}
                   </AvatarFallback>
                 </Avatar>
               </div>
@@ -207,16 +248,22 @@ export function Chat() {
         <CardFooter>
           <form
             onSubmit={handleSendChat}
-            className="flex w-full items-center space-x-2"
+            className="flex w-full items-center space-x-2 relative"
           >
+            {/* <Badge
+              className="-top-6 left-2 text-xs font-medium absolute rounded-sm text-gray-600 flex items-center gap-4"
+              variant="secondary"
+            >
+              User typing <Typing />
+            </Badge> */}
             <Input
               id="message"
               placeholder="Type your message..."
               className="flex-1"
               autoComplete="off"
               value={messageText}
-              // onFocus={handleReadMessage}
-              onChange={(event) => setMessageText(event.target.value)}
+              onFocus={handleReadMessage}
+              onChange={handleChangeMessage}
             />
             <Button
               type="submit"
